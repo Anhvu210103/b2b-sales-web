@@ -5,6 +5,9 @@ from datetime import datetime, timedelta
 from uuid import UUID, uuid4
 from enum import Enum
 import asyncio
+import json
+from redis import Redis
+from app.config import settings
 
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -32,7 +35,24 @@ class ScraperScheduler:
     def __init__(self):
         self.jobs: Dict[str, Dict] = {}
         self._running = False
+        self.store = Redis.from_url(settings.REDIS_URL, decode_responses=True)
     
+    def _persist(self, job):
+        self.store.set("b2b:scraping:job:" + job["id"], json.dumps(job, default=str))
+        self.store.sadd("b2b:scraping:jobs", job["id"])
+
+    def _enqueue(self, job_id):
+        from app.core.celery_app import run_scraping
+        self._persist(self.jobs[job_id])
+        try:
+            run_scraping.apply_async(args=[job_id], task_id=job_id)
+        except Exception as exc:
+            job = self.jobs[job_id]
+            job["status"] = JobStatus.FAILED
+            job["error"] = str(exc)
+            self._persist(job)
+            raise
+
     # ==================== YellowPages ====================
     
     async def schedule_yellowpages_scraping(
@@ -68,7 +88,7 @@ class ScraperScheduler:
         }
         
         # Run in background
-        asyncio.create_task(self._run_yellowpages_job(job_id))
+        self._enqueue(job_id)
         
         return job_id
     
@@ -76,6 +96,7 @@ class ScraperScheduler:
         job = self.jobs[job_id]
         job["status"] = JobStatus.RUNNING
         job["started_at"] = datetime.utcnow()
+        self._persist(job)
         
         try:
             async with YellowPagesScraper() as scraper:
@@ -107,6 +128,7 @@ class ScraperScheduler:
             job["error"] = str(e)
         finally:
             job["completed_at"] = datetime.utcnow()
+            self._persist(job)
     
     # ==================== VietnamWorks ====================
     
@@ -142,13 +164,14 @@ class ScraperScheduler:
             "error": None,
         }
         
-        asyncio.create_task(self._run_vietnamworks_job(job_id))
+        self._enqueue(job_id)
         return job_id
     
     async def _run_vietnamworks_job(self, job_id: str):
         job = self.jobs[job_id]
         job["status"] = JobStatus.RUNNING
         job["started_at"] = datetime.utcnow()
+        self._persist(job)
         
         try:
             async with VietnamWorksScraper() as scraper:
@@ -168,6 +191,7 @@ class ScraperScheduler:
             job["error"] = str(e)
         finally:
             job["completed_at"] = datetime.utcnow()
+            self._persist(job)
     
     # ==================== Apollo ====================
     
@@ -195,13 +219,14 @@ class ScraperScheduler:
             "error": None,
         }
         
-        asyncio.create_task(self._run_apollo_job(job_id))
+        self._enqueue(job_id)
         return job_id
     
     async def _run_apollo_job(self, job_id: str):
         job = self.jobs[job_id]
         job["status"] = JobStatus.RUNNING
         job["started_at"] = datetime.utcnow()
+        self._persist(job)
         
         try:
             async with ApolloScraper() as scraper:
@@ -221,6 +246,7 @@ class ScraperScheduler:
             job["error"] = str(e)
         finally:
             job["completed_at"] = datetime.utcnow()
+            self._persist(job)
     
     # ==================== Signals ====================
     
@@ -249,13 +275,14 @@ class ScraperScheduler:
             "error": None,
         }
         
-        asyncio.create_task(self._run_signals_job(job_id))
+        self._enqueue(job_id)
         return job_id
     
     async def _run_signals_job(self, job_id: str):
         job = self.jobs[job_id]
         job["status"] = JobStatus.RUNNING
         job["started_at"] = datetime.utcnow()
+        self._persist(job)
         
         try:
             async with SignalsScraper() as scraper:
@@ -295,39 +322,46 @@ class ScraperScheduler:
             job["error"] = str(e)
         finally:
             job["completed_at"] = datetime.utcnow()
+            self._persist(job)
     
     # ==================== Job Management ====================
     
     def get_jobs(self, status: Optional[str] = None) -> List[Dict]:
         """List all jobs, optionally filtered by status."""
-        jobs = list(self.jobs.values())
+        jobs = [self.get_job(jid) for jid in self.store.smembers("b2b:scraping:jobs")]
+        jobs = [job for job in jobs if job is not None]
         if status:
             jobs = [j for j in jobs if j["status"] == status]
         return sorted(jobs, key=lambda x: x["created_at"], reverse=True)
     
     def get_job(self, job_id: str) -> Optional[Dict]:
         """Get job by ID."""
-        return self.jobs.get(job_id)
+        raw = self.store.get("b2b:scraping:job:" + job_id)
+        return json.loads(raw) if raw else None
     
     async def cancel_job(self, job_id: str) -> bool:
         """Cancel a pending/running job."""
-        job = self.jobs.get(job_id)
+        job = self.get_job(job_id)
         if not job:
             return False
         
         if job["status"] in (JobStatus.PENDING, JobStatus.RUNNING):
+            from app.core.celery_app import celery_app
+            celery_app.control.revoke(job_id, terminate=True)
             job["status"] = JobStatus.CANCELLED
             job["completed_at"] = datetime.utcnow()
+            self._persist(job)
             return True
         return False
     
     async def get_stats(self) -> Dict[str, Any]:
         """Get scheduler statistics."""
-        total = len(self.jobs)
+        jobs = self.get_jobs()
+        total = len(jobs)
         by_status = {}
         by_type = {}
         
-        for job in self.jobs.values():
+        for job in jobs:
             by_status[job["status"]] = by_status.get(job["status"], 0) + 1
             by_type[job["type"]] = by_type.get(job["type"], 0) + 1
         

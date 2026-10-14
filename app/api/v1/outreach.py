@@ -203,6 +203,7 @@ async def create_sequence(
     
     await db.commit()
     await db.refresh(sequence)
+    await db.refresh(sequence, attribute_names=["steps"])
     
     return OutreachSequenceResponse.model_validate(sequence)
 

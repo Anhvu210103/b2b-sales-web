@@ -1,0 +1,31 @@
+# Personal CRM only. External database credentials are entered securely in Render.
+# No paid database, Redis, worker, disk, or custom domain is provisioned here.
+services:
+  - type: web
+    name: chatask-personal
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements-web.txt
+    startCommand: bash deploy/start-web.sh
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.11
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false
+      - key: B2B_BOOTSTRAP_EMAIL
+        sync: false
+      - key: B2B_BOOTSTRAP_PASSWORD
+        sync: false
+      - key: DEBUG
+        value: "false"
+      - key: ENABLE_SCRAPING
+        value: "false"
+      - key: DATABASE_POOL_SIZE
+        value: "2"
+      - key: DATABASE_MAX_OVERFLOW
+        value: "1"
+      - key: UPLOAD_DIR
+        value: /tmp/chatask-uploads

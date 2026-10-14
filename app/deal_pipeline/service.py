@@ -281,7 +281,7 @@ class DealPipelineService:
             type=ActivityType(activity_type),
             subject=subject,
             description=description,
-            metadata=metadata or {},
+            metadata_=metadata or {},
             created_by=created_by,
             due_at=due_at,
         )

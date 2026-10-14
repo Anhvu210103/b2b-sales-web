@@ -129,9 +129,9 @@ class Deal(Base):
     )
     
     # Relationships
-    lead: Mapped["Lead"] = relationship("Lead", back_populates="deals")
+    lead: Mapped["Lead"] = relationship("Lead", back_populates="deals", lazy="selectin")
     assigned_user: Mapped[Optional["User"]] = relationship(
-        "User", back_populates="assigned_deals", foreign_keys=[assigned_to]
+        "User", back_populates="assigned_deals", foreign_keys=[assigned_to], lazy="selectin"
     )
     activities: Mapped[list["DealActivity"]] = relationship(
         "DealActivity", back_populates="deal", cascade="all, delete-orphan"
@@ -145,6 +145,14 @@ class Deal(Base):
 
     def __repr__(self) -> str:
         return f"<Deal(id={self.id}, name={self.name}, stage={self.stage}, value={self.value})>"
+
+    @property
+    def lead_name(self) -> str:
+        return self.lead.company_name
+
+    @property
+    def lead_email(self) -> Optional[str]:
+        return self.lead.primary_email
 
 
 class DealActivity(Base):
@@ -170,7 +178,7 @@ class DealActivity(Base):
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     
     # Metadata
-    metadata: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+    metadata_: Mapped[Optional[dict]] = mapped_column("metadata", JSON, nullable=True)
     
     # Outcome
     outcome: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
@@ -214,7 +222,7 @@ class DealActivity(Base):
         "User", back_populates="created_activities", foreign_keys=[created_by]
     )
     assignee: Mapped[Optional["User"]] = relationship(
-        "User", back_populates="assigned_activities", foreign_keys=[assigned_to]
+        "User", back_populates="assigned_activities", foreign_keys=[assigned_to], lazy="selectin"
     )
     outreach_log: Mapped[Optional["OutreachLog"]] = relationship("OutreachLog")
 

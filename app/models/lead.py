@@ -167,7 +167,6 @@ class Lead(Base):
 
     # Indexes
     __table_args__ = (
-        Index("ix_leads_company_name_gin", "company_name", postgresql_using="gin"),
         Index("ix_leads_status_source", "status", "source"),
         Index("ix_leads_assigned_status", "assigned_to", "status"),
         Index("ix_leads_next_followup", "next_followup_at"),

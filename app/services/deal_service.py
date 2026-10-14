@@ -124,10 +124,10 @@ class DealService:
                 type=ActivityType.STATUS_CHANGED,
                 subject=f"Stage: {old_values['stage']} → {deal.stage}",
                 description=f"Stage changed from {old_values['stage']} to {deal.stage}",
-                metadata={"old_stage": old_values['stage'], "new_stage": deal.stage.value},
+                metadata_={"old_stage": old_values['stage'], "new_stage": deal.stage.value},
                 created_by=current_user.id if hasattr(current_user, 'id') else None,
             )
-            self.db.add(DealActivity(**activity.__dict__))
+            self.db.add(activity)
             await self.db.commit()
         
         return deal
@@ -240,11 +240,12 @@ class DealService:
         from app.models.deal import DealActivity
         
         activity = DealActivity(
-            **activity_data.model_dump(exclude={"created_by"}),
+            **activity_data.model_dump(exclude={"created_by", "metadata"}),
+            metadata_=activity_data.metadata,
             created_by=current_user.id if hasattr(current_user, 'id') else None,
         )
         
-        self.db.add(DealActivity(**activity.__dict__))
+        self.db.add(activity)
         await self.db.commit()
         await self.db.refresh(activity)
         return activity
@@ -281,7 +282,7 @@ class DealService:
         
         update_dict = update_data.model_dump(exclude_unset=True)
         for field, value in update_dict.items():
-            setattr(activity, field, value)
+            setattr(activity, "metadata_" if field == "metadata" else field, value)
         
         if "completed_at" in update_data.model_dump(exclude_unset=True):
             activity.completed_at = update_data.completed_at

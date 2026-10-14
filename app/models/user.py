@@ -157,7 +157,7 @@ class AuditLog(Base):
     # Details
     old_values: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     new_values: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
-    metadata: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+    metadata_: Mapped[Optional[dict]] = mapped_column("metadata", JSON, nullable=True)
     
     # Context
     ip_address: Mapped[Optional[str]] = mapped_column(String(45), nullable=True)

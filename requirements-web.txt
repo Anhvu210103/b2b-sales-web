@@ -1,0 +1,14 @@
+# Small, pinned runtime for the personal CRM. Automation uses requirements.txt.
+fastapi==0.109.0
+uvicorn==0.27.0
+pydantic==2.5.3
+pydantic-settings==2.1.0
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+bcrypt==3.2.2
+python-multipart==0.0.6
+sqlalchemy==2.0.25
+asyncpg==0.29.0
+python-dotenv==1.0.0
+email-validator==2.1.0.post1
+slowapi==0.1.9

@@ -96,7 +96,7 @@ async def scrape_apollo(
 @router.post("/signals")
 async def scrape_signals(
     background_tasks: BackgroundTasks,
-    sources: List[str] = ["news", "association", "portfolio"],
+    sources: List[str] = ["news", "associations", "portfolios"],
     days: int = 30,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
@@ -127,7 +127,7 @@ async def list_scraping_jobs(
     from app.scrapers.scheduler import ScraperScheduler
     
     scheduler = ScraperScheduler()
-    jobs = await scheduler.get_jobs(status=status)
+    jobs = scheduler.get_jobs(status=status)
     
     return {"jobs": jobs}
 
@@ -141,7 +141,7 @@ async def get_scraping_job(
     from app.scrapers.scheduler import ScraperScheduler
     
     scheduler = ScraperScheduler()
-    job = await scheduler.get_job(job_id)
+    job = scheduler.get_job(job_id)
     
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")

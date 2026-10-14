@@ -7,8 +7,10 @@ from app.models.outreach import (
     OutreachStatus,
     OutreachTemplate,
     OutreachSequence,
+    OutreachCampaign,
+    SequenceStep,
 )
-from app.models.deal import Deal, DealStage, DealActivity, ActivityType
+from app.models.deal import Deal, DealStage, DealActivity, ActivityType, LeadList
 from app.models.user import User, UserRole, AuditLog
 
 __all__ = [
@@ -21,6 +23,9 @@ __all__ = [
     "OutreachStatus",
     "OutreachTemplate",
     "OutreachSequence",
+    "OutreachCampaign",
+    "SequenceStep",
+    "LeadList",
     "Deal",
     "DealStage",
     "DealActivity",

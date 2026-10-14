@@ -1,6 +1,7 @@
 """Leads API routes."""
 
 from typing import Optional
+from fastapi.encoders import jsonable_encoder
 from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, or_, and_
@@ -198,7 +199,7 @@ async def create_lead(
     await db.refresh(lead)
     
     # Audit log
-    from app.models.audit import AuditLog
+    from app.models.user import AuditLog
     from uuid import uuid4
     audit = AuditLog(
         user_id=current_user.id,
@@ -206,7 +207,7 @@ async def create_lead(
         action="lead.created",
         resource_type="lead",
         resource_id=lead.id,
-        new_values=lead_data.model_dump(),
+        new_values=lead_data.model_dump(mode="json"),
     )
     db.add(audit)
     await db.commit()
@@ -244,15 +245,15 @@ async def update_lead(
     await db.refresh(lead)
     
     # Audit log
-    from app.models.audit import AuditLog
+    from app.models.user import AuditLog
     audit = AuditLog(
         user_id=current_user.id,
         user_email=current_user.email,
         action="lead.updated",
         resource_type="lead",
         resource_id=lead.id,
-        old_values=old_values,
-        new_values=update_data,
+        old_values=jsonable_encoder(old_values),
+        new_values=jsonable_encoder(update_data),
     )
     db.add(audit)
     await db.commit()

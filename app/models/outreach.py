@@ -130,7 +130,7 @@ class OutreachLog(Base):
     template: Mapped[Optional["OutreachTemplate"]] = relationship("OutreachTemplate")
     sequence: Mapped[Optional["OutreachSequence"]] = relationship("OutreachSequence", back_populates="logs")
     campaign: Mapped[Optional["OutreachCampaign"]] = relationship("OutreachCampaign", back_populates="logs")
-    sender: Mapped[Optional["User"]] = relationship("User", foreign_keys=[sent_by])
+    sender: Mapped[Optional["User"]] = relationship("User", back_populates="sent_outreach", foreign_keys=[sent_by])
 
     __table_args__ = (
         Index("ix_outreach_logs_lead_channel", "lead_id", "channel"),
@@ -241,7 +241,7 @@ class OutreachSequence(Base):
         "OutreachLog", back_populates="sequence", cascade="all, delete-orphan"
     )
     steps: Mapped[list["SequenceStep"]] = relationship(
-        "SequenceStep", back_populates="sequence", cascade="all, delete-orphan"
+        "SequenceStep", back_populates="sequence", cascade="all, delete-orphan", lazy="selectin"
     )
 
     def __repr__(self) -> str:

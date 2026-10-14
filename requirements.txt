@@ -59,3 +59,6 @@ black==23.12.1
 isort==5.13.2
 mypy==1.8.0
 pre-commit==3.6.0
+# API rate limiting and passlib-compatible password hashing
+slowapi==0.1.9
+bcrypt==3.2.2

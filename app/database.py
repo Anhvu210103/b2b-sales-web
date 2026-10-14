@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import (
 from sqlalchemy.orm import DeclarativeBase
 
 from app.config import settings
+from app.core.database_url import connection_options
 
 
 class Base(DeclarativeBase):
@@ -21,8 +22,10 @@ class Base(DeclarativeBase):
 
 
 # Create async engine
+database_url, database_connect_args = connection_options(settings.DATABASE_URL)
 engine: AsyncEngine = create_async_engine(
-    settings.DATABASE_URL,
+    database_url,
+    connect_args=database_connect_args,
     pool_size=settings.DATABASE_POOL_SIZE,
     max_overflow=settings.DATABASE_MAX_OVERFLOW,
     pool_pre_ping=True,

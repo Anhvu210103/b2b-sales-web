@@ -15,7 +15,7 @@ class UserBase(BaseModel):
     phone: Optional[str] = Field(None, max_length=50)
     role: UserRole = UserRole.SDR
     department: Optional[str] = Field(None, max_length=100)
-    manager_id: Optional[str] = None
+    manager_id: Optional[UUID] = None
     timezone: str = "Asia/Ho_Chi_Minh"
     language: str = "vi"
     notifications_enabled: bool = True
@@ -32,7 +32,7 @@ class UserUpdate(BaseModel):
     phone: Optional[str] = Field(None, max_length=50)
     role: Optional[UserRole] = None
     department: Optional[str] = Field(None, max_length=100)
-    manager_id: Optional[str] = None
+    manager_id: Optional[UUID] = None
     timezone: Optional[str] = None
     language: Optional[str] = None
     notifications_enabled: Optional[bool] = None
@@ -52,13 +52,13 @@ class UserProfileUpdate(BaseModel):
 class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     
-    id: str
+    id: UUID
     email: str
     full_name: str
     phone: Optional[str] = None
     role: UserRole
     department: Optional[str] = None
-    manager_id: Optional[str] = None
+    manager_id: Optional[UUID] = None
     timezone: str
     language: str
     notifications_enabled: bool

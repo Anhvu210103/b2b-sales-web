@@ -4,7 +4,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Optional
 
-from pydantic import Field
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -22,6 +22,10 @@ class Settings(BaseSettings):
     APP_NAME: str = "B2B Sales Pipeline"
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = False
+    CORS_ORIGINS: list[str] = []
+    ENABLE_SCRAPING: bool = True
+    B2B_BOOTSTRAP_EMAIL: str = ""
+    B2B_BOOTSTRAP_PASSWORD: Optional[SecretStr] = None
     SECRET_KEY: str = Field(..., description="Secret key for JWT tokens")
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30 * 24 * 60  # 30 days
@@ -83,6 +87,7 @@ class Settings(BaseSettings):
     SCRAPER_TIMEOUT: int = 30
     SCRAPER_MAX_RETRIES: int = 3
     PLAYWRIGHT_HEADLESS: bool = True
+    PLAYWRIGHT_EXECUTABLE_PATH: Optional[str] = None
 
     # Outreach
     OUTREACH_DAILY_LIMIT: int = 30

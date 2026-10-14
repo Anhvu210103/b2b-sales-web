@@ -1,14 +1,17 @@
 """Authentication routes."""
 
 from datetime import datetime, timedelta
-from fastapi import APIRouter, Depends, HTTPException, status, Response
+from typing import Optional
+from app.core.security import verify_password
+from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
+from app.core.rate_limit import limiter
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.api.deps import get_db, get_current_active_user, get_current_user, create_access_token
 from app.models.user import User
-from app.schemas.user import UserLogin, UserCreate, UserUpdate, UserResponse, Token, TokenData
+from app.schemas.user import UserLogin, UserCreate, UserProfileUpdate, UserResponse, Token, TokenData
 from app.config import settings
 
 router = APIRouter()
@@ -26,7 +29,9 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 
 
 @router.post("/login", response_model=Token)
+@limiter.limit("5/minute")
 async def login(
+    request: Request,
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: AsyncSession = Depends(get_db),
 ):
@@ -36,7 +41,7 @@ async def login(
     )
     user = result.scalar_one_or_none()
     
-    if not user or not user.verify_password(form_data.password):
+    if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
@@ -115,7 +120,7 @@ async def get_me(
 
 @router.patch("/me", response_model=UserResponse)
 async def update_profile(
-    user_update: UserUpdate,
+    user_update: UserProfileUpdate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):

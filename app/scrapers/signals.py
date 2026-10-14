@@ -16,7 +16,7 @@ class SignalsScraper(BaseScraper):
     """Scraper for buying signals from multiple sources."""
     
     def __init__(self, **kwargs):
-        super().__init__(headless=False, **kwargs)
+        super().__init__(headless=kwargs.pop("headless", settings.PLAYWRIGHT_HEADLESS), **kwargs)
         
         # News sources
         self.news_feeds = {

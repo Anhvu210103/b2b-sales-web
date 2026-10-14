@@ -44,7 +44,7 @@ class LeadCreate(LeadBase):
     primary_contact_title: Optional[str] = Field(None, max_length=100)
     
     # Assigned user
-    assigned_to: Optional[str] = None
+    assigned_to: Optional[UUID] = None
 
 
 class LeadUpdate(BaseModel):
@@ -67,7 +67,7 @@ class LeadUpdate(BaseModel):
     source_details: Optional[dict] = None
     source_url: Optional[HttpUrl] = None
     
-    status: Optional[Any] = None
+    status: Optional[LeadStatus] = None
     status_reason: Optional[str] = None
     
     primary_email: Optional[EmailStr] = None
@@ -84,7 +84,7 @@ class LeadUpdate(BaseModel):
     
     tags: Optional[list[str]] = None
     notes: Optional[str] = None
-    assigned_to: Optional[str] = None
+    assigned_to: Optional[UUID] = None
 
 
 class LeadResponse(LeadBase):
@@ -92,7 +92,7 @@ class LeadResponse(LeadBase):
     
     model_config = ConfigDict(from_attributes=True)
     
-    id: str
+    id: UUID
     status: Any
     status_reason: Optional[str] = None
     
@@ -112,7 +112,7 @@ class LeadResponse(LeadBase):
     intent_score: float = 0.0
     engagement_score: float = 0.0
     
-    assigned_to: Optional[str] = None
+    assigned_to: Optional[UUID] = None
     assigned_user_name: Optional[str] = None
     
     created_at: datetime
@@ -130,7 +130,7 @@ class LeadListResponse(BaseModel):
     
     model_config = ConfigDict(from_attributes=True)
     
-    id: str
+    id: UUID
     company_name: str
     domain: Optional[str] = None
     industry: Optional[str] = None
@@ -139,7 +139,7 @@ class LeadListResponse(BaseModel):
     source: Any
     status: Any
     primary_email: Optional[EmailStr] = None
-    assigned_to: Optional[str] = None
+    assigned_to: Optional[UUID] = None
     fit_score: float = 0.0
     intent_score: float = 0.0
     created_at: datetime
@@ -149,7 +149,7 @@ class LeadListResponse(BaseModel):
 class LeadEnrichRequest(BaseModel):
     """Request to enrich a lead."""
     
-    lead_id: str
+    lead_id: UUID
     force_refresh: bool = False
     sources: Optional[list[str]] = None
 
@@ -157,7 +157,7 @@ class LeadEnrichRequest(BaseModel):
 class LeadScoreRequest(BaseModel):
     """Request to score a lead."""
     
-    lead_id: str
+    lead_id: UUID
     force_refresh: bool = False
 
 

@@ -9,6 +9,7 @@ import random
 
 from playwright.async_api import async_playwright, Browser, BrowserContext, Page
 import aiohttp
+from app.config import settings
 
 
 @dataclass
@@ -65,7 +66,9 @@ class BaseScraper(ABC):
     async def start(self):
         """Initialize browser and session."""
         self.playwright = await async_playwright().start()
-        self.browser = await self.playwright.chromium.launch(headless=self.headless)
+        self.browser = await self.playwright.chromium.launch(
+            headless=self.headless, executable_path=settings.PLAYWRIGHT_EXECUTABLE_PATH
+        )
         self.context = await self.browser.new_context(
             viewport={"width": 1366, "height": 768},
             user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
